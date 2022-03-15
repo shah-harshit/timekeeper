@@ -13,6 +13,7 @@ export const CommonHeader = () => {
     ignoreQueryPrefix: true,
   });
   const { duration: durationFromURL } = parse(locationSearch);
+  const localDuration = durationFromURL || localStorage.getItem("duration");
 
   const [
     duration,
@@ -42,8 +43,12 @@ export const CommonHeader = () => {
 
   const handleDurationChange = (e) => {
     const updatedDuration = Number(e.target.value);
+
+    setEndTime(new Date().getTime());
+    localStorage.setItem("duration", updatedDuration);
     setDuration(updatedDuration);
     setIsDefaultDuration(updatedDuration === DEFAULT_DURATION);
+
     history.push({
       search: stringify({
         duration: updatedDuration,
@@ -53,17 +58,24 @@ export const CommonHeader = () => {
     });
   };
 
+  // Updates duration whenever local storage duration or URL duration changes
   React.useEffect(() => {
-    if (durationFromURL) {
-      setDuration(durationFromURL);
+    if (!localDuration) {
+      return;
     }
-  }, [duration, durationFromURL, setDuration, setIsDefaultDuration]);
+
+    setDuration(localDuration);
+    localStorage.setItem("duration", localDuration);
+  }, [localDuration, setDuration]);
 
   React.useEffect(() => {
-    setIsDefaultDuration(Number(durationFromURL) === DEFAULT_DURATION);
+    setIsDefaultDuration(
+      localDuration ? Number(localDuration) === DEFAULT_DURATION : true
+    );
+    localStorage.setItem("duration", localDuration || duration);
     history.push({
       search: stringify({
-        duration: durationFromURL || duration,
+        duration: localDuration || duration,
         startTime: getStartTime(endTime, duration),
         endTime,
       }),
